@@ -1,57 +1,45 @@
-name: Compile CloakV4 for Windows
+name: Compile CloakV4 with Visual Studio
 on:
   workflow_dispatch:
 
 jobs:
-  build-windows:
-    runs-on: windows-2022
+  build:
+    runs-on: windows-latest
     steps:
-      - name: Checkout Code
+      - name: Checkout Repository
         uses: actions/checkout@v4
         with:
-          submodules: recursive # Automatically downloads nested dependency folders if the repo uses them
+          submodules: recursive
 
-      - name: Setup MSYS2
-        uses: msys2/setup-msys2@v2
-        with:
-          msystem: MINGW64
-          update: true
-          install: >-
-            git
-            make
-            mingw-w64-x86_64-cmake
-            mingw-w64-x86_64-gcc
-            mingw-w64-x86_64-luajit
-            mingw-w64-x86_64-curl
-            mingw-w64-x86_64-zlib
-            mingw-w64-x86_64-libpng
-            mingw-w64-x86_64-jpeg-turbo
-            mingw-w64-x86_64-bzip2
-            mingw-w64-x86_64-sqlite3
-            mingw-w64-x86_64-openal
-            mingw-w64-x86_64-libvorbis
-            mingw-w64-x86_64-libogg
-            mingw-w64-x86_64-gmp
-            mingw-w64-x86_64-jsoncpp
-            mingw-w64-x86_64-ninja
+      - name: Add MSBuild to PATH
+        uses: microsoft/setup-msbuild@v2
 
-      - name: Compile Client
-        shell: msys2 {0}
+      - name: Install vcpkg Dependencies
         run: |
-          mkdir -p build && cd build
-          cmake -G "Ninja" \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DRUN_IN_PLACE=TRUE \
-            -DENABLE_SOUND=FALSE \
-            -DENABLE_CURL=TRUE \
-            -DENABLE_LUAJIT=TRUE \
-            ..
-          ninja
+          vcpkg integrate install
+          vcpkg install luajit zlib curl openal-soft libvorbis libogg gmp jsoncpp --triplet x64-windows
 
-      - name: Upload Finished Executable
+      - name: Configure CMake
+        run: |
+          mkdir build
+          cd build
+          cmake -G "Visual Studio 17 2022" -A x64 `
+            -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake `
+            -DRUN_IN_PLACE=TRUE `
+            -DENABLE_SOUND=FALSE `
+            -DENABLE_CURL=TRUE `
+            -DENABLE_LUAJIT=TRUE `
+            ..
+
+      - name: Build Project
+        run: |
+          cd build
+          msbuild ALL_BUILD.vcxproj /p:Configuration=Release /p:Platform=x64
+
+      - name: Upload Finished Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: CloakV4-Windows-Build
+          name: CloakV4-VS-Build
           path: |
-            build/bin/
-            build/src/
+            build/bin/Release/
+            build/Release/
