@@ -1,6 +1,6 @@
 name: Compile CloakV4 for Windows
 on:
-  workflow_dispatch: # Allows you to manually click a button to build
+  workflow_dispatch:
 
 jobs:
   build-windows:
@@ -8,6 +8,8 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          submodules: recursive # Automatically downloads nested dependency folders if the repo uses them
 
       - name: Setup MSYS2
         uses: msys2/setup-msys2@v2
@@ -36,11 +38,11 @@ jobs:
       - name: Compile Client
         shell: msys2 {0}
         run: |
-          mkdir build && cd build
+          mkdir -p build && cd build
           cmake -G "Ninja" \
             -DCMAKE_BUILD_TYPE=Release \
             -DRUN_IN_PLACE=TRUE \
-            -DENABLE_SOUND=TRUE \
+            -DENABLE_SOUND=FALSE \
             -DENABLE_CURL=TRUE \
             -DENABLE_LUAJIT=TRUE \
             ..
@@ -50,4 +52,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: CloakV4-Windows-Build
-          path: build/bin/
+          path: |
+            build/bin/
+            build/src/
