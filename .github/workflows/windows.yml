@@ -16,7 +16,7 @@ on:
       - 'po/**.po'
       - 'util/buildbot/**'
       - 'misc/*.manifest'
-      - '.github/workflows/windows.yml''
+      - '.github/workflows/windows.yml'
   pull_request:
     paths:
       - 'lib/**.[ch]'
