@@ -14,12 +14,12 @@ jobs:
       - name: Add MSBuild to PATH
         uses: microsoft/setup-msbuild@v2
 
-      - name: Install vcpkg Dependencies
+      - name: Install Dependencies via vcpkg
         run: |
           vcpkg integrate install
-          vcpkg install luajit zlib curl openal-soft libvorbis libogg gmp jsoncpp --triplet x64-windows
+          vcpkg install luajit zlib curl openal-soft libvorbis libogg gmp jsoncpp sqlite3 --triplet x64-windows
 
-      - name: Configure CMake
+      - name: Configure CMake with Precise Paths
         run: |
           mkdir build
           cd build
@@ -29,12 +29,14 @@ jobs:
             -DENABLE_SOUND=FALSE `
             -DENABLE_CURL=TRUE `
             -DENABLE_LUAJIT=TRUE `
+            -DREQUIRE_LUAJIT=TRUE `
+            -DENABLE_SYSTEM_JSONCPP=TRUE `
             ..
 
       - name: Build Project
         run: |
           cd build
-          msbuild ALL_BUILD.vcxproj /p:Configuration=Release /p:Platform=x64
+          msbuild ALL_BUILD.vcxproj /p:Configuration=Release /p:Platform=x64 /p:BuildInParallel=true
 
       - name: Upload Finished Artifact
         uses: actions/upload-artifact@v4
@@ -43,3 +45,4 @@ jobs:
           path: |
             build/bin/Release/
             build/Release/
+            build/bin/
