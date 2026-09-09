@@ -1,0 +1,53 @@
+name: Compile CloakV4 for Windows
+on:
+  workflow_dispatch: # Allows you to manually click a button to build
+
+jobs:
+  build-windows:
+    runs-on: windows-2022
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            git
+            make
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-luajit
+            mingw-w64-x86_64-curl
+            mingw-w64-x86_64-zlib
+            mingw-w64-x86_64-libpng
+            mingw-w64-x86_64-jpeg-turbo
+            mingw-w64-x86_64-bzip2
+            mingw-w64-x86_64-sqlite3
+            mingw-w64-x86_64-openal
+            mingw-w64-x86_64-libvorbis
+            mingw-w64-x86_64-libogg
+            mingw-w64-x86_64-gmp
+            mingw-w64-x86_64-jsoncpp
+            mingw-w64-x86_64-ninja
+
+      - name: Compile Client
+        shell: msys2 {0}
+        run: |
+          mkdir build && cd build
+          cmake -G "Ninja" \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DRUN_IN_PLACE=TRUE \
+            -DENABLE_SOUND=TRUE \
+            -DENABLE_CURL=TRUE \
+            -DENABLE_LUAJIT=TRUE \
+            ..
+          ninja
+
+      - name: Upload Finished Executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: CloakV4-Windows-Build
+          path: build/bin/
